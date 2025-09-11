@@ -14,11 +14,8 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/evalstate/mcp-miro"
+    "url": "git+https://github.com/EricDunaway/mcp-miro"
   },
-  "bugs":{
-    "url": "https://github.com/evalstate/mcp-miro/issues"
-  },  
   "scripts": {
     "build": "tsc && node -e \"require('fs').chmodSync('build/index.js', '755')\"",
     "prepare": "npm run build",
