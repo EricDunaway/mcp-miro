@@ -93,3 +93,21 @@ npm run inspector
 The Inspector will provide a URL to access debugging tools in your browser.
 
 In Dev environment recommend adding https://github.com/miroapp/api-clients/blob/041de24ebf7955432b447d887ede066ad4c7e2c7/packages/generator/spec.json for reference.
+
+## Publishing
+
+### GitHub Packages
+
+This repository includes a GitHub Action that automatically publishes the package to GitHub Packages. The workflow is triggered by:
+
+- **Release publication**: When a new release is published on GitHub
+- **Version tags**: When a tag matching `v*` pattern is pushed (e.g., `v1.0.0`)
+- **Manual dispatch**: Can be triggered manually from the GitHub Actions tab
+
+The package is published as `@ericdunaway/mcp-miro` on GitHub Packages to comply with the registry's naming requirements.
+
+To install from GitHub Packages:
+
+```bash
+npm install @ericdunaway/mcp-miro --registry=https://npm.pkg.github.com
+```
