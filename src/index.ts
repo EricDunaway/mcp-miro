@@ -38,7 +38,7 @@ if (!oauthToken) {
 const server = new Server(
   {
     name: "mcp-miro",
-    version: "0.1.0",
+    version: "0.2.0",
   },
   {
     capabilities: {
@@ -99,6 +99,123 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
         },
       },
       {
+        name: "get_all_items",
+        description: "Get all items from a Miro board",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board to get items from",
+            },
+            limit: {
+              type: "number",
+              description: "Maximum number of items to return (default: 50, max: 50)",
+              default: 50,
+              minimum: 1,
+              maximum: 50,
+            },
+            cursor: {
+              type: "string",
+              description: "Cursor for pagination",
+            },
+          },
+          required: ["boardId"],
+        },
+      },
+      {
+        name: "get_specific_item",
+        description: "Get a specific item from a Miro board by its ID",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board that contains the item",
+            },
+            itemId: {
+              type: "string",
+              description: "ID of the item to retrieve",
+            },
+          },
+          required: ["boardId", "itemId"],
+        },
+      },
+      {
+        name: "update_item_position",
+        description: "Update the position or parent of an item on a Miro board",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board that contains the item",
+            },
+            itemId: {
+              type: "string",
+              description: "ID of the item to update",
+            },
+            position: {
+              type: "object",
+              properties: {
+                x: { type: "number" },
+                y: { type: "number" },
+              },
+              description: "New position for the item",
+            },
+            parent: {
+              type: "object",
+              properties: {
+                id: { type: "string", description: "ID of the new parent item" },
+              },
+              description: "New parent for the item",
+            },
+          },
+          required: ["boardId", "itemId"],
+        },
+      },
+      {
+        name: "delete_item",
+        description: "Delete a specific item from a Miro board",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board that contains the item",
+            },
+            itemId: {
+              type: "string",
+              description: "ID of the item to delete",
+            },
+          },
+          required: ["boardId", "itemId"],
+        },
+      },
+      {
+        name: "bulk_delete_items",
+        description: "Delete multiple items from a Miro board",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board that contains the items",
+            },
+            itemIds: {
+              type: "array",
+              description: "Array of item IDs to delete",
+              items: {
+                type: "string",
+              },
+              minItems: 1,
+              maxItems: 50,
+            },
+          },
+          required: ["boardId", "itemIds"],
+        },
+      },
+      {
         name: "create_sticky_note",
         description:
           "Create a sticky note on a Miro board. By default, sticky notes are 199x228 and available in these colors: gray, light_yellow, yellow, orange, light_green, green, dark_green, cyan, light_pink, pink, violet, red, light_blue, blue, dark_blue, black.",
@@ -147,103 +264,95 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
               description: "Y coordinate position",
               default: 0,
             },
+            parent: {
+              type: "object",
+              properties: {
+                id: { type: "string", description: "ID of the parent frame" },
+              },
+              description: "Parent frame to attach the sticky note to",
+            },
           },
           required: ["boardId", "content"],
         },
       },
       {
-        name: "bulk_create_items",
-        description:
-          "Create multiple items on a Miro board in a single transaction (max 20 items)",
+        name: "get_sticky_note",
+        description: "Get a specific sticky note from a Miro board",
         inputSchema: {
           type: "object",
           properties: {
             boardId: {
               type: "string",
-              description: "ID of the board to create the items on",
+              description: "ID of the board that contains the sticky note",
             },
-            items: {
-              type: "array",
-              description: "Array of items to create",
-              items: {
-                type: "object",
-                properties: {
-                  type: {
-                    type: "string",
-                    enum: [
-                      "app_card",
-                      "text",
-                      "shape",
-                      "sticky_note",
-                      "image",
-                      "document",
-                      "card",
-                      "frame",
-                      "embed",
-                    ],
-                    description: "Type of item to create",
-                  },
-                  data: {
-                    type: "object",
-                    description: "Item-specific data configuration",
-                  },
-                  style: {
-                    type: "object",
-                    description: "Item-specific style configuration",
-                  },
-                  position: {
-                    type: "object",
-                    description: "Item position configuration",
-                  },
-                  geometry: {
-                    type: "object",
-                    description: "Item geometry configuration",
-                  },
-                  parent: {
-                    type: "object",
-                    description: "Parent item configuration",
-                  },
-                },
-                required: ["type"],
-              },
-              minItems: 1,
-              maxItems: 20,
+            itemId: {
+              type: "string",
+              description: "ID of the sticky note to retrieve",
             },
           },
-          required: ["boardId", "items"],
+          required: ["boardId", "itemId"],
         },
       },
       {
-        name: "get_frames",
-        description: "Get all frames from a Miro board",
+        name: "update_sticky_note",
+        description: "Update an existing sticky note on a Miro board",
         inputSchema: {
           type: "object",
           properties: {
             boardId: {
               type: "string",
-              description: "ID of the board to get frames from",
+              description: "ID of the board that contains the sticky note",
+            },
+            itemId: {
+              type: "string",
+              description: "ID of the sticky note to update",
+            },
+            content: {
+              type: "string",
+              description: "New text content for the sticky note",
+            },
+            color: {
+              type: "string",
+              description: "New color for the sticky note",
+              enum: [
+                "gray",
+                "light_yellow",
+                "yellow",
+                "orange",
+                "light_green",
+                "green",
+                "dark_green",
+                "cyan",
+                "light_pink",
+                "pink",
+                "violet",
+                "red",
+                "light_blue",
+                "blue",
+                "dark_blue",
+                "black",
+              ],
             },
           },
-          required: ["boardId"],
+          required: ["boardId", "itemId"],
         },
       },
       {
-        name: "get_items_in_frame",
-        description:
-          "Get all items contained within a specific frame on a Miro board",
+        name: "delete_sticky_note",
+        description: "Delete a sticky note from a Miro board",
         inputSchema: {
           type: "object",
           properties: {
             boardId: {
               type: "string",
-              description: "ID of the board that contains the frame",
+              description: "ID of the board that contains the sticky note",
             },
-            frameId: {
+            itemId: {
               type: "string",
-              description: "ID of the frame to get items from",
+              description: "ID of the sticky note to delete",
             },
           },
-          required: ["boardId", "frameId"],
+          required: ["boardId", "itemId"],
         },
       },
       {
@@ -357,8 +466,450 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 rotation: { type: "number", default: 0 },
               },
             },
+            parent: {
+              type: "object",
+              properties: {
+                id: { type: "string", description: "ID of the parent frame" },
+              },
+              description: "Parent frame to attach the shape to",
+            },
           },
           required: ["boardId", "shape"],
+        },
+      },
+      {
+        name: "create_connector",
+        description: "Create a connector between two items on a Miro board",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board",
+            },
+            startItem: {
+              type: "object",
+              properties: {
+                id: { type: "string", description: "ID of the start item" },
+                position: {
+                  type: "object",
+                  properties: {
+                    x: { type: "string", description: "X position as percentage (e.g., '0%')" },
+                    y: { type: "string", description: "Y position as percentage (e.g., '50%')" },
+                  },
+                },
+              },
+              required: ["id"],
+            },
+            endItem: {
+              type: "object",
+              properties: {
+                id: { type: "string", description: "ID of the end item" },
+                position: {
+                  type: "object",
+                  properties: {
+                    x: { type: "string", description: "X position as percentage (e.g., '100%')" },
+                    y: { type: "string", description: "Y position as percentage (e.g., '50%')" },
+                  },
+                },
+              },
+              required: ["id"],
+            },
+            style: {
+              type: "object",
+              properties: {
+                strokeColor: { type: "string" },
+                strokeWidth: { type: "number", minimum: 1, maximum: 24 },
+                strokeStyle: {
+                  type: "string",
+                  enum: ["normal", "dashed", "dotted"],
+                },
+                startStrokeCap: {
+                  type: "string",
+                  enum: ["none", "stealth", "rounded_stealth", "diamond", "diamond_filled", "oval", "oval_filled", "arrow", "triangle", "triangle_filled", "circle", "circle_filled", "square", "square_filled", "erd_one", "erd_many", "erd_one_or_many", "erd_zero_or_one", "erd_one_and_only_one", "erd_zero_or_many"],
+                },
+                endStrokeCap: {
+                  type: "string",
+                  enum: ["none", "stealth", "rounded_stealth", "diamond", "diamond_filled", "oval", "oval_filled", "arrow", "triangle", "triangle_filled", "circle", "circle_filled", "square", "square_filled", "erd_one", "erd_many", "erd_one_or_many", "erd_zero_or_one", "erd_one_and_only_one", "erd_zero_or_many"],
+                },
+              },
+            },
+            captions: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  content: { type: "string", description: "Caption text" },
+                  position: { type: "string", description: "Position as percentage (e.g., '50%')" },
+                  textAlignVertical: {
+                    type: "string",
+                    enum: ["top", "middle", "bottom"],
+                    default: "middle",
+                  },
+                },
+              },
+            },
+            shape: {
+              type: "string",
+              enum: ["straight", "curved", "elbowed"],
+              default: "curved",
+              description: "Shape of the connector line",
+            },
+          },
+          required: ["boardId", "startItem", "endItem"],
+        },
+      },
+      {
+        name: "get_connectors",
+        description: "Get all connectors from a Miro board",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board to get connectors from",
+            },
+            limit: {
+              type: "number",
+              description: "Maximum number of connectors to return (default: 50)",
+              default: 50,
+            },
+            cursor: {
+              type: "string",
+              description: "Cursor for pagination",
+            },
+          },
+          required: ["boardId"],
+        },
+      },
+      {
+        name: "get_connector",
+        description: "Get a specific connector from a Miro board",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board that contains the connector",
+            },
+            connectorId: {
+              type: "string",
+              description: "ID of the connector to retrieve",
+            },
+          },
+          required: ["boardId", "connectorId"],
+        },
+      },
+      {
+        name: "update_connector",
+        description: "Update an existing connector on a Miro board",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board that contains the connector",
+            },
+            connectorId: {
+              type: "string",
+              description: "ID of the connector to update",
+            },
+            startItem: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                position: {
+                  type: "object",
+                  properties: {
+                    x: { type: "string" },
+                    y: { type: "string" },
+                  },
+                },
+              },
+            },
+            endItem: {
+              type: "object",
+              properties: {
+                id: { type: "string" },
+                position: {
+                  type: "object",
+                  properties: {
+                    x: { type: "string" },
+                    y: { type: "string" },
+                  },
+                },
+              },
+            },
+            style: {
+              type: "object",
+              properties: {
+                strokeColor: { type: "string" },
+                strokeWidth: { type: "number" },
+                strokeStyle: { type: "string" },
+                startStrokeCap: { type: "string" },
+                endStrokeCap: { type: "string" },
+              },
+            },
+          },
+          required: ["boardId", "connectorId"],
+        },
+      },
+      {
+        name: "delete_connector",
+        description: "Delete a connector from a Miro board",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board that contains the connector",
+            },
+            connectorId: {
+              type: "string",
+              description: "ID of the connector to delete",
+            },
+          },
+          required: ["boardId", "connectorId"],
+        },
+      },
+      {
+        name: "create_frame",
+        description: "Create a frame on a Miro board",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board to create the frame on",
+            },
+            title: {
+              type: "string",
+              description: "Title of the frame",
+            },
+            style: {
+              type: "object",
+              properties: {
+                fillColor: { type: "string" },
+              },
+            },
+            position: {
+              type: "object",
+              properties: {
+                x: { type: "number", default: 0 },
+                y: { type: "number", default: 0 },
+              },
+            },
+            geometry: {
+              type: "object",
+              properties: {
+                width: { type: "number", default: 800 },
+                height: { type: "number", default: 600 },
+              },
+            },
+          },
+          required: ["boardId", "title"],
+        },
+      },
+      {
+        name: "get_frames",
+        description: "Get all frames from a Miro board",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board to get frames from",
+            },
+          },
+          required: ["boardId"],
+        },
+      },
+      {
+        name: "get_items_in_frame",
+        description:
+          "Get all items contained within a specific frame on a Miro board",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board that contains the frame",
+            },
+            frameId: {
+              type: "string",
+              description: "ID of the frame to get items from",
+            },
+          },
+          required: ["boardId", "frameId"],
+        },
+      },
+      {
+        name: "create_text",
+        description: "Create a text item on a Miro board",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board to create the text on",
+            },
+            content: {
+              type: "string",
+              description: "Text content",
+            },
+            style: {
+              type: "object",
+              properties: {
+                color: { type: "string" },
+                fontSize: { type: "number", minimum: 10, maximum: 288 },
+                textAlign: {
+                  type: "string",
+                  enum: ["left", "center", "right"],
+                },
+              },
+            },
+            position: {
+              type: "object",
+              properties: {
+                x: { type: "number", default: 0 },
+                y: { type: "number", default: 0 },
+              },
+            },
+            geometry: {
+              type: "object",
+              properties: {
+                width: { type: "number", default: 200 },
+              },
+            },
+            parent: {
+              type: "object",
+              properties: {
+                id: { type: "string", description: "ID of the parent frame" },
+              },
+              description: "Parent frame to attach the text to",
+            },
+          },
+          required: ["boardId", "content"],
+        },
+      },
+      {
+        name: "create_card",
+        description: "Create a card item on a Miro board",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board to create the card on",
+            },
+            title: {
+              type: "string",
+              description: "Title of the card",
+            },
+            description: {
+              type: "string",
+              description: "Description of the card",
+            },
+            assigneeId: {
+              type: "string",
+              description: "User ID of the assignee",
+            },
+            dueDate: {
+              type: "string",
+              description: "Due date in ISO 8601 format",
+            },
+            style: {
+              type: "object",
+              properties: {
+                fillColor: { type: "string" },
+                textColor: { type: "string" },
+              },
+            },
+            position: {
+              type: "object",
+              properties: {
+                x: { type: "number", default: 0 },
+                y: { type: "number", default: 0 },
+              },
+            },
+            geometry: {
+              type: "object",
+              properties: {
+                width: { type: "number", default: 320, minimum: 256 },
+                height: { type: "number", default: 176 },
+              },
+            },
+            parent: {
+              type: "object",
+              properties: {
+                id: { type: "string", description: "ID of the parent frame" },
+              },
+              description: "Parent frame to attach the card to",
+            },
+          },
+          required: ["boardId", "title"],
+        },
+      },
+      {
+        name: "bulk_create_items",
+        description:
+          "Create multiple items on a Miro board in a single transaction (max 20 items)",
+        inputSchema: {
+          type: "object",
+          properties: {
+            boardId: {
+              type: "string",
+              description: "ID of the board to create the items on",
+            },
+            items: {
+              type: "array",
+              description: "Array of items to create",
+              items: {
+                type: "object",
+                properties: {
+                  type: {
+                    type: "string",
+                    enum: [
+                      "app_card",
+                      "text",
+                      "shape",
+                      "sticky_note",
+                      "image",
+                      "document",
+                      "card",
+                      "frame",
+                      "embed",
+                    ],
+                    description: "Type of item to create",
+                  },
+                  data: {
+                    type: "object",
+                    description: "Item-specific data configuration",
+                  },
+                  style: {
+                    type: "object",
+                    description: "Item-specific style configuration",
+                  },
+                  position: {
+                    type: "object",
+                    description: "Item position configuration",
+                  },
+                  geometry: {
+                    type: "object",
+                    description: "Item geometry configuration",
+                  },
+                  parent: {
+                    type: "object",
+                    description: "Parent item configuration (not supported for frames)",
+                  },
+                },
+                required: ["type"],
+              },
+              minItems: 1,
+              maxItems: 20,
+            },
+          },
+          required: ["boardId", "items"],
         },
       },
     ],
@@ -383,6 +934,93 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
 
+    case "get_all_items": {
+      const { boardId, limit = 50, cursor } = request.params.arguments as any;
+      const items = await miroClient.getItems(boardId, { limit, cursor });
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(items, null, 2),
+          },
+        ],
+      };
+    }
+
+    case "get_specific_item": {
+      const { boardId, itemId } = request.params.arguments as any;
+      const item = await miroClient.getItem(boardId, itemId);
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(item, null, 2),
+          },
+        ],
+      };
+    }
+
+    case "update_item_position": {
+      const { boardId, itemId, position, parent } = request.params.arguments as any;
+      
+      const updateData = {};
+      if (position) updateData.position = position;
+      if (parent) updateData.parent = parent;
+      
+      const item = await miroClient.updateItemPositionOrParent(boardId, itemId, updateData);
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Updated item ${itemId} position/parent on board ${boardId}`,
+          },
+        ],
+      };
+    }
+
+    case "delete_item": {
+      const { boardId, itemId } = request.params.arguments as any;
+      await miroClient.deleteItem(boardId, itemId);
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Deleted item ${itemId} from board ${boardId}`,
+          },
+        ],
+      };
+    }
+
+    case "bulk_delete_items": {
+      const { boardId, itemIds } = request.params.arguments as any;
+      
+      const results = [];
+      const errors = [];
+      
+      for (const itemId of itemIds) {
+        try {
+          await miroClient.deleteItem(boardId, itemId);
+          results.push(itemId);
+        } catch (error) {
+          errors.push({ itemId, error: error.message });
+        }
+      }
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Bulk delete completed. Deleted: ${results.length} items. Errors: ${errors.length}` +
+                  (errors.length > 0 ? `\nErrors: ${JSON.stringify(errors, null, 2)}` : ''),
+          },
+        ],
+      };
+    }
+
     case "create_sticky_note": {
       const {
         boardId,
@@ -390,9 +1028,10 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         color = "yellow",
         x = 0,
         y = 0,
+        parent,
       } = request.params.arguments as any;
 
-      const stickyNote = await miroClient.createStickyNote(boardId, {
+      const stickyNoteData = {
         data: {
           content: content,
         },
@@ -403,7 +1042,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           x: x,
           y: y,
         },
-      });
+      };
+      
+      if (parent) {
+        stickyNoteData.parent = parent;
+      }
+
+      const stickyNote = await miroClient.createStickyNote(boardId, stickyNoteData);
 
       return {
         content: [
@@ -415,16 +1060,193 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
 
-    case "bulk_create_items": {
-      const { boardId, items } = request.params.arguments as any;
+    case "get_sticky_note": {
+      const { boardId, itemId } = request.params.arguments as any;
+      const stickyNote = await miroClient.getStickyNote(boardId, itemId);
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(stickyNote, null, 2),
+          },
+        ],
+      };
+    }
 
-      const createdItems = await miroClient.bulkCreateItems(boardId, items);
+    case "update_sticky_note": {
+      const { boardId, itemId, content, color } = request.params.arguments as any;
+      
+      const updateData = {};
+      if (content) updateData.data = { content };
+      if (color) updateData.style = { fillColor: color };
+      
+      const stickyNote = await miroClient.updateStickyNote(boardId, itemId, updateData);
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Updated sticky note ${itemId} on board ${boardId}`,
+          },
+        ],
+      };
+    }
+
+    case "delete_sticky_note": {
+      const { boardId, itemId } = request.params.arguments as any;
+      await miroClient.deleteStickyNote(boardId, itemId);
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Deleted sticky note ${itemId} from board ${boardId}`,
+          },
+        ],
+      };
+    }
+
+    case "create_shape": {
+      const { boardId, shape, content, style, position, geometry, parent } = request.params.arguments as any;
+
+      const shapeData = {
+        data: {
+          shape: shape,  // IMPORTANT: Using 'shape' not 'type'
+          content: content,
+        },
+        style: style || {},
+        position: position || { x: 0, y: 0 },
+        geometry: geometry || { width: 200, height: 200, rotation: 0 },
+      };
+      
+      if (parent) {
+        shapeData.parent = parent;
+      }
+
+      const shapeItem = await miroClient.createShape(boardId, shapeData);
 
       return {
         content: [
           {
             type: "text",
-            text: `Created ${createdItems.length} items on board ${boardId}`,
+            text: `Created ${shape} shape with ID ${shapeItem.id} on board ${boardId}`,
+          },
+        ],
+      };
+    }
+
+    case "create_connector": {
+      const { boardId, startItem, endItem, style, captions, shape = "curved" } = request.params.arguments as any;
+      
+      const connectorData = {
+        startItem: startItem,
+        endItem: endItem,
+        shape: shape,
+        style: style || {
+          strokeColor: "#333333",
+          strokeWidth: 2,
+          strokeStyle: "normal",
+          endStrokeCap: "rounded_stealth",
+        },
+        captions: captions || [],
+      };
+      
+      const connector = await miroClient.createConnector(boardId, connectorData);
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Created connector ${connector.id} from ${startItem.id} to ${endItem.id}`,
+          },
+        ],
+      };
+    }
+
+    case "get_connectors": {
+      const { boardId, limit = 50, cursor } = request.params.arguments as any;
+      const connectors = await miroClient.getConnectors(boardId, { limit, cursor });
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(connectors, null, 2),
+          },
+        ],
+      };
+    }
+
+    case "get_connector": {
+      const { boardId, connectorId } = request.params.arguments as any;
+      const connector = await miroClient.getConnector(boardId, connectorId);
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: JSON.stringify(connector, null, 2),
+          },
+        ],
+      };
+    }
+
+    case "update_connector": {
+      const { boardId, connectorId, startItem, endItem, style } = request.params.arguments as any;
+      
+      const updateData = {};
+      if (startItem) updateData.startItem = startItem;
+      if (endItem) updateData.endItem = endItem;
+      if (style) updateData.style = style;
+      
+      const connector = await miroClient.updateConnector(boardId, connectorId, updateData);
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Updated connector ${connectorId} on board ${boardId}`,
+          },
+        ],
+      };
+    }
+
+    case "delete_connector": {
+      const { boardId, connectorId } = request.params.arguments as any;
+      await miroClient.deleteConnector(boardId, connectorId);
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Deleted connector ${connectorId} from board ${boardId}`,
+          },
+        ],
+      };
+    }
+
+    case "create_frame": {
+      const { boardId, title, style, position, geometry } = request.params.arguments as any;
+      
+      const frameData = {
+        data: {
+          title: title,
+          type: "freeform",
+          format: "custom",
+        },
+        style: style || { fillColor: "#ffffff" },
+        position: position || { x: 0, y: 0 },
+        geometry: geometry || { width: 800, height: 600 },
+      };
+      
+      const frame = await miroClient.createFrame(boardId, frameData);
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Created frame "${title}" with ID ${frame.id} on board ${boardId}`,
           },
         ],
       };
@@ -458,25 +1280,75 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       };
     }
 
-    case "create_shape": {
-      const { boardId, shape, content, style, position, geometry } = request
-        .params.arguments as any;
-
-      const shapeItem = await miroClient.createShape(boardId, {
+    case "create_text": {
+      const { boardId, content, style, position, geometry, parent } = request.params.arguments as any;
+      
+      const textData = {
         data: {
-          shape: shape,
           content: content,
         },
         style: style || {},
         position: position || { x: 0, y: 0 },
-        geometry: geometry || { width: 200, height: 200, rotation: 0 },
-      });
+        geometry: geometry || { width: 200 },
+      };
+      
+      if (parent) {
+        textData.parent = parent;
+      }
+      
+      const text = await miroClient.createText(boardId, textData);
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Created text item with ID ${text.id} on board ${boardId}`,
+          },
+        ],
+      };
+    }
+
+    case "create_card": {
+      const { boardId, title, description, assigneeId, dueDate, style, position, geometry, parent } = request.params.arguments as any;
+      
+      const cardData = {
+        data: {
+          title: title,
+          description: description,
+          assigneeId: assigneeId,
+          dueDate: dueDate,
+        },
+        style: style || {},
+        position: position || { x: 0, y: 0 },
+        geometry: geometry || { width: 320, height: 176 },
+      };
+      
+      if (parent) {
+        cardData.parent = parent;
+      }
+      
+      const card = await miroClient.createCard(boardId, cardData);
+      
+      return {
+        content: [
+          {
+            type: "text",
+            text: `Created card "${title}" with ID ${card.id} on board ${boardId}`,
+          },
+        ],
+      };
+    }
+
+    case "bulk_create_items": {
+      const { boardId, items } = request.params.arguments as any;
+
+      const createdItems = await miroClient.bulkCreateItems(boardId, items);
 
       return {
         content: [
           {
             type: "text",
-            text: `Created ${shape} shape with ID ${shapeItem.id} on board ${boardId}`,
+            text: `Created ${createdItems.length} items on board ${boardId}`,
           },
         ],
       };
