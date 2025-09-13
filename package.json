@@ -5,7 +5,7 @@
   "type": "module",
   "publishConfig": {
     "access": "public"
-  },  
+  },
   "bin": {
     "mcp-miro": "./build/index.js"
   },
@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "0.6.0",
-    "node-fetch": "^3.3.2",
+    "undici": "^7.16.0",
     "yargs": "^17.7.2"
   },
   "devDependencies": {

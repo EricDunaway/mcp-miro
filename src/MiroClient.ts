@@ -1,5 +1,5 @@
 
-import fetch from 'node-fetch';
+import { request } from 'undici';
 
 interface MiroBoard {
   id: string;
@@ -29,20 +29,22 @@ export class MiroClient {
   constructor(private token: string) {}
 
   private async fetchApi(path: string, options: { method?: string; body?: any } = {}) {
-    const response = await fetch(`https://api.miro.com/v2${path}`, {
+    const { statusCode, body } = await request(`https://api.miro.com/v2${path}`, {
       method: options.method || 'GET',
       headers: {
         'Authorization': `Bearer ${this.token}`,
         'Content-Type': 'application/json'
       },
-      ...(options.body ? { body: JSON.stringify(options.body) } : {})
+      body: options.body ? JSON.stringify(options.body) : undefined
     });
-    
-    if (!response.ok) {
-      throw new Error(`Miro API error: ${response.status} ${response.statusText}`);
+
+    const data = await body.json() as any;
+
+    if (statusCode >= 400) {
+      throw new Error(`Miro API error: ${statusCode} ${data?.message || ''}`);
     }
 
-    return response.json();
+    return data;
   }
 
   async getBoards(): Promise<MiroBoard[]> {
@@ -63,7 +65,7 @@ export class MiroClient {
   }
 
   async bulkCreateItems(boardId: string, items: any[]): Promise<MiroItem[]> {
-    const response = await fetch(`https://api.miro.com/v2/boards/${boardId}/items/bulk`, {
+    const { statusCode, body } = await request(`https://api.miro.com/v2/boards/${boardId}/items/bulk`, {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${this.token}`,
@@ -71,13 +73,13 @@ export class MiroClient {
       },
       body: JSON.stringify(items)
     });
-    
-    if (!response.ok) {
-      const error = await response.json() as { message?: string };
-      throw new Error(`Miro API error: ${error.message || response.statusText}`);
+
+    const result = await body.json() as { data?: MiroItem[]; message?: string };
+
+    if (statusCode >= 400) {
+      throw new Error(`Miro API error: ${result.message || statusCode}`);
     }
 
-    const result = await response.json() as { data: MiroItem[] };
     return result.data || [];
   }
 
