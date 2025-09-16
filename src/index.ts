@@ -395,6 +395,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const stickyNote = await miroClient.createStickyNote(boardId, {
         data: {
           content: content,
+          shape: "square",
         },
         style: {
           fillColor: color,

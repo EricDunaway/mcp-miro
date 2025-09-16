@@ -1,5 +1,6 @@
 
 import { request } from 'undici';
+import type { components } from './types/miro-api.js';
 
 interface MiroBoard {
   id: string;
@@ -14,14 +15,14 @@ interface MiroBoardsResponse {
   offset: number;
 }
 
-interface MiroItem {
-  id: string;
-  type: string;
-  [key: string]: any;
-}
+type MiroItem =
+  | components["schemas"]["GenericItem"]
+  | components["schemas"]["StickyNoteItem"]
+  | components["schemas"]["ShapeItem"]
+  | components["schemas"]["FrameItem"];
 
-interface MiroItemsResponse {
-  data: MiroItem[];
+interface MiroItemsResponse<T = MiroItem> {
+  data: T[];
   cursor?: string;
 }
 
@@ -57,11 +58,14 @@ export class MiroClient {
     return response.data;
   }
 
-  async createStickyNote(boardId: string, data: any): Promise<MiroItem> {
+  async createStickyNote(
+    boardId: string,
+    data: components["schemas"]["StickyNoteCreateRequest"],
+  ): Promise<components["schemas"]["StickyNoteItem"]> {
     return this.fetchApi(`/boards/${boardId}/sticky_notes`, {
       method: 'POST',
-      body: data
-    }) as Promise<MiroItem>;
+      body: data,
+    }) as Promise<components["schemas"]["StickyNoteItem"]>;
   }
 
   async bulkCreateItems(boardId: string, items: any[]): Promise<MiroItem[]> {
@@ -83,20 +87,32 @@ export class MiroClient {
     return result.data || [];
   }
 
-  async getFrames(boardId: string): Promise<MiroItem[]> {
-    const response = await this.fetchApi(`/boards/${boardId}/items?type=frame&limit=50`) as MiroItemsResponse;
+  async getFrames(
+    boardId: string,
+  ): Promise<components["schemas"]["FrameItem"][]> {
+    const response = await this.fetchApi(
+      `/boards/${boardId}/items?type=frame&limit=50`,
+    ) as MiroItemsResponse<components["schemas"]["FrameItem"]>;
     return response.data;
   }
 
-  async getItemsInFrame(boardId: string, frameId: string): Promise<MiroItem[]> {
-    const response = await this.fetchApi(`/boards/${boardId}/items?parent_item_id=${frameId}&limit=50`) as MiroItemsResponse;
+  async getItemsInFrame(
+    boardId: string,
+    frameId: string,
+  ): Promise<MiroItem[]> {
+    const response = await this.fetchApi(
+      `/boards/${boardId}/items?parent_item_id=${frameId}&limit=50`,
+    ) as MiroItemsResponse;
     return response.data;
   }
 
-  async createShape(boardId: string, data: any): Promise<MiroItem> {
+  async createShape(
+    boardId: string,
+    data: components["schemas"]["ShapeCreateRequest"],
+  ): Promise<components["schemas"]["ShapeItem"]> {
     return this.fetchApi(`/boards/${boardId}/shapes`, {
       method: 'POST',
-      body: data
-    }) as Promise<MiroItem>;
+      body: data,
+    }) as Promise<components["schemas"]["ShapeItem"]>;
   }
 }
