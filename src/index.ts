@@ -3,6 +3,7 @@
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import { MiroClient } from "./MiroClient.js";
+import type { components } from "./types/miro-api.js";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -136,6 +137,12 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
                 "black",
               ],
               default: "yellow",
+            },
+            shape: {
+              type: "string",
+              description: "Shape of the sticky note",
+              enum: ["square", "rectangle"],
+              default: "square",
             },
             x: {
               type: "number",
@@ -388,13 +395,25 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         boardId,
         content,
         color = "yellow",
+        shape = "square",
         x = 0,
         y = 0,
-      } = request.params.arguments as any;
+      } = request.params.arguments as {
+        boardId: string;
+        content: string;
+        color?: components["schemas"]["StickyNoteStyle"]["fillColor"];
+        shape?: components["schemas"]["StickyNoteData"]["shape"];
+        x?: number;
+        y?: number;
+      };
+
+      const resolvedShape: components["schemas"]["StickyNoteData"]["shape"] =
+        shape === "rectangle" ? "rectangle" : "square";
 
       const stickyNote = await miroClient.createStickyNote(boardId, {
         data: {
           content: content,
+          shape: resolvedShape,
         },
         style: {
           fillColor: color,
